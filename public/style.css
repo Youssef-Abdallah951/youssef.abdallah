@@ -521,7 +521,7 @@ header.scrolled { border-bottom-color: var(--border); background: var(--header-s
     font-weight: 600;
     z-index: 2;
 }
-.fa-toolbox, .project-bg-icon, .fa-cart-shopping ,.fa-seedling{
+.fa-toolbox, .project-bg-icon, .fa-cart-shopping ,.fa-seedling , .fa-dumbbell{
     position: absolute;
     right: -6px; bottom: -14px;
     font-size: 86px;
