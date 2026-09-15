@@ -60,6 +60,3 @@ The selected appearance is also saved and restored automatically when the websit
 - JavaScript
 - Git & GitHub
 - Vercel
-│   └── certificates/
-│
-└── assets/
