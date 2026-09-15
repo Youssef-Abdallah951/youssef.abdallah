@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-accent="sky">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,6 +20,45 @@
     <button id="back-to-top" class="back-to-top" aria-label="Back to top">
         <i class="fas fa-arrow-up-long" aria-hidden="true"></i>
     </button>
+
+    <!-- Theme settings -->
+    <div id="settingsOverlay" class="settings-overlay" hidden></div>
+    <aside
+        id="settingsPanel"
+        class="settings-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settingsTitle"
+        hidden
+    >
+        <div class="settings-head">
+            <h2 id="settingsTitle">Settings</h2>
+            <button id="settingsClose" class="settings-close" aria-label="Close settings">
+                <i class="fas fa-xmark" aria-hidden="true"></i>
+            </button>
+        </div>
+        <p class="settings-sub">Customize your browsing experience.</p>
+
+        <div class="settings-group">
+            <span class="settings-label" id="colorLabel">Website Colors</span>
+            <div class="swatches" role="radiogroup" aria-labelledby="colorLabel">
+                <button type="button" class="swatch" role="radio" data-color="sky" aria-checked="true" aria-label="Sky Blue" title="Sky Blue" style="--sw1: #0e98bb; --sw2: #1aaa9e;"><span class="swatch-check" aria-hidden="true"><i class="fas fa-check"></i></span></button>
+                <button type="button" class="swatch" role="radio" data-color="green" aria-checked="false" aria-label="Green" title="Green" style="--sw1: #15803d; --sw2: #16a34a;"><span class="swatch-check" aria-hidden="true"><i class="fas fa-check"></i></span></button>
+                <button type="button" class="swatch" role="radio" data-color="purple" aria-checked="false" aria-label="Purple" title="Purple" style="--sw1: #7c3aed; --sw2: #9333ea;"><span class="swatch-check" aria-hidden="true"><i class="fas fa-check"></i></span></button>
+                <button type="button" class="swatch" role="radio" data-color="pink" aria-checked="false" aria-label="Pink" title="Pink" style="--sw1: #be185d; --sw2: #db2777;"><span class="swatch-check" aria-hidden="true"><i class="fas fa-check"></i></span></button>
+                <button type="button" class="swatch" role="radio" data-color="orange" aria-checked="false" aria-label="Orange" title="Orange" style="--sw1: #c2410c; --sw2: #ea580c;"><span class="swatch-check" aria-hidden="true"><i class="fas fa-check"></i></span></button>
+                <p class="swatch-name">Selected: <strong id="swatchName">Sky Blue</strong></p>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <span class="settings-label" id="modeLabel">Appearance</span>
+            <div class="mode-toggle" role="group" aria-labelledby="modeLabel">
+                <button type="button" id="modeLight" class="mode-btn" aria-pressed="false"><i class="fas fa-sun" aria-hidden="true"></i> Light</button>
+                <button type="button" id="modeDark" class="mode-btn" aria-pressed="false"><i class="fas fa-moon" aria-hidden="true"></i> Dark</button>
+            </div>
+        </div>
+    </aside>
 
     <!-- Navigation -->
     <header>
@@ -48,6 +87,16 @@
                     title="Toggle light/dark mode"
                 >
                     <i class="fas fa-moon" id="themeIcon" aria-hidden="true"></i>
+                </button>
+                <button
+                    id="settingsBtn"
+                    class="settings-btn"
+                    aria-label="Open theme settings"
+                    aria-expanded="false"
+                    aria-controls="settingsPanel"
+                    title="Theme settings"
+                >
+                    <i class="fas fa-gear" aria-hidden="true"></i>
                 </button>
             </div>
         </nav>

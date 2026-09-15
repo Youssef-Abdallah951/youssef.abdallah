@@ -1,11 +1,36 @@
 "use strict";
 
-/* ===== Theme Toggle Module ===== */
+/* ===== Theme + Accent Settings Module ===== */
 (function () {
     const THEME_KEY = "portfolio-theme";
+    const ACCENT_KEY = "portfolio-accent";
+    const VALID_ACCENTS = ["sky", "green", "purple", "pink", "orange"];
+    const ACCENT_NAMES = {
+        sky: "Sky Blue",
+        green: "Green",
+        purple: "Purple",
+        pink: "Pink",
+        orange: "Orange",
+    };
+    const DEFAULT_ACCENT = "sky";
+
     const themeToggleBtn = document.getElementById("themeToggle");
     const themeIcon = document.getElementById("themeIcon");
     const metaThemeColor = document.getElementById("meta-theme-color");
+
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsPanel = document.getElementById("settingsPanel");
+    const settingsOverlay = document.getElementById("settingsOverlay");
+    const settingsClose = document.getElementById("settingsClose");
+    const swatches = settingsPanel
+        ? Array.from(settingsPanel.querySelectorAll(".swatch"))
+        : [];
+    const swatchName = document.getElementById("swatchName");
+    const modeLightBtn = document.getElementById("modeLight");
+    const modeDarkBtn = document.getElementById("modeDark");
+
+    let lastFocused = null;
+    let closeTimer = null;
 
     /** Read from localStorage; fall back to OS preference */
     function getPreferredTheme() {
@@ -16,20 +41,41 @@
             : "light";
     }
 
-    /** Apply the given theme — updates body class, icon, meta tag, aria-label, localStorage */
+    function getPreferredAccent() {
+        const saved = localStorage.getItem(ACCENT_KEY);
+        if (VALID_ACCENTS.includes(saved)) return saved;
+        return DEFAULT_ACCENT;
+    }
+
+    function syncModeButtons(theme) {
+        if (modeLightBtn)
+            modeLightBtn.setAttribute(
+                "aria-pressed",
+                String(theme === "light")
+            );
+        if (modeDarkBtn)
+            modeDarkBtn.setAttribute("aria-pressed", String(theme === "dark"));
+    }
+
+    /** Apply the given theme — updates body+html class, icon, meta tag, aria-label, localStorage */
     function applyTheme(theme) {
         const isDark = theme === "dark";
 
         document.body.classList.toggle("dark-theme", isDark);
+        document.documentElement.classList.toggle("dark-theme", isDark);
 
         /* Icon: sun = light mode, moon = dark mode */
-        themeIcon.className = isDark ? "fas fa-moon" : "fas fa-sun";
+        if (themeIcon) {
+            themeIcon.className = isDark ? "fas fa-moon" : "fas fa-sun";
+        }
 
         /* Aria label describes the *action*, not the current state */
-        themeToggleBtn.setAttribute(
-            "aria-label",
-            isDark ? "Switch to light mode" : "Switch to dark mode"
-        );
+        if (themeToggleBtn) {
+            themeToggleBtn.setAttribute(
+                "aria-label",
+                isDark ? "Switch to light mode" : "Switch to dark mode"
+            );
+        }
 
         /* Browser toolbar color */
         if (metaThemeColor) {
@@ -39,7 +85,35 @@
             );
         }
 
-        localStorage.setItem(THEME_KEY, theme);
+        syncModeButtons(theme);
+
+        try {
+            localStorage.setItem(THEME_KEY, theme);
+        } catch (e) {
+            /* storage unavailable — theme still applies for this session */
+        }
+    }
+
+    /** Apply accent color — updates <html data-accent>, swatches, label, localStorage */
+    function applyAccent(accent) {
+        const next = VALID_ACCENTS.includes(accent) ? accent : DEFAULT_ACCENT;
+        document.documentElement.setAttribute("data-accent", next);
+
+        swatches.forEach((btn) => {
+            const active = btn.dataset.color === next;
+            btn.setAttribute("aria-checked", String(active));
+            btn.tabIndex = 0;
+        });
+
+        if (swatchName) {
+            swatchName.textContent = ACCENT_NAMES[next] || next;
+        }
+
+        try {
+            localStorage.setItem(ACCENT_KEY, next);
+        } catch (e) {
+            /* ignore */
+        }
     }
 
     /** Toggle between dark and light, with icon spin animation */
@@ -50,38 +124,117 @@
         const next = current === "dark" ? "light" : "dark";
 
         /* Trigger spin animation */
-        themeIcon.classList.add("spin");
-        themeIcon.addEventListener(
-            "animationend",
-            () => themeIcon.classList.remove("spin"),
-            { once: true }
-        );
+        if (themeIcon) {
+            themeIcon.classList.add("spin");
+            themeIcon.addEventListener(
+                "animationend",
+                () => themeIcon.classList.remove("spin"),
+                { once: true }
+            );
+        }
 
         applyTheme(next);
     }
 
-    /* Click handler */
-    themeToggleBtn.addEventListener("click", toggleTheme);
-
-    /* Keyboard accessibility: Enter and Space */
-    themeToggleBtn.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            toggleTheme();
+    function openSettings() {
+        if (!settingsPanel || !settingsOverlay) return;
+        if (closeTimer) {
+            clearTimeout(closeTimer);
+            closeTimer = null;
         }
+        lastFocused = document.activeElement;
+        settingsPanel.hidden = false;
+        settingsOverlay.hidden = false;
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                settingsPanel.classList.add("open");
+                settingsOverlay.classList.add("show");
+            });
+        });
+        if (settingsBtn) settingsBtn.setAttribute("aria-expanded", "true");
+        if (settingsClose) settingsClose.focus();
+        document.addEventListener("keydown", onPanelKeydown);
+    }
+
+    function closeSettings() {
+        if (!settingsPanel || !settingsOverlay) return;
+        settingsPanel.classList.remove("open");
+        settingsOverlay.classList.remove("show");
+        if (settingsBtn) settingsBtn.setAttribute("aria-expanded", "false");
+        document.removeEventListener("keydown", onPanelKeydown);
+        if (closeTimer) clearTimeout(closeTimer);
+        closeTimer = setTimeout(() => {
+            settingsPanel.hidden = true;
+            settingsOverlay.hidden = true;
+            closeTimer = null;
+        }, 300);
+        if (lastFocused && typeof lastFocused.focus === "function") {
+            lastFocused.focus();
+        } else if (settingsBtn) {
+            settingsBtn.focus();
+        }
+    }
+
+    function onPanelKeydown(e) {
+        if (e.key === "Escape") {
+            e.preventDefault();
+            closeSettings();
+        }
+    }
+
+    /* Click handler */
+    if (themeToggleBtn) themeToggleBtn.addEventListener("click", toggleTheme);
+
+    /* Keyboard accessibility: Enter and Space (native buttons already handle this,
+       kept for parity with original implementation) */
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                toggleTheme();
+            }
+        });
+    }
+
+    /* Settings panel wiring */
+    if (settingsBtn) {
+        settingsBtn.addEventListener("click", () => {
+            const isOpen =
+                settingsPanel &&
+                !settingsPanel.hidden &&
+                settingsPanel.classList.contains("open");
+            if (isOpen) closeSettings();
+            else openSettings();
+        });
+    }
+    if (settingsClose) settingsClose.addEventListener("click", closeSettings);
+    if (settingsOverlay) settingsOverlay.addEventListener("click", closeSettings);
+
+    swatches.forEach((btn) => {
+        btn.addEventListener("click", () => applyAccent(btn.dataset.color));
     });
+
+    if (modeLightBtn)
+        modeLightBtn.addEventListener("click", () => applyTheme("light"));
+    if (modeDarkBtn)
+        modeDarkBtn.addEventListener("click", () => applyTheme("dark"));
 
     /* Listen for OS-level theme changes (if user hasn't manually set a preference) */
     window
         .matchMedia("(prefers-color-scheme: dark)")
         .addEventListener("change", (e) => {
-            if (!localStorage.getItem(THEME_KEY)) {
-                applyTheme(e.matches ? "dark" : "light");
+            try {
+                if (!localStorage.getItem(THEME_KEY)) {
+                    applyTheme(e.matches ? "dark" : "light");
+                }
+            } catch (err) {
+                /* ignore */
             }
         });
 
     /* Initialize on page load */
     applyTheme(getPreferredTheme());
+    applyAccent(getPreferredAccent());
 })();
 
 /* ===== Mobile nav toggle ===== */
